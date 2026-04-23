@@ -1177,16 +1177,20 @@ function wzLoadImage(input){
   const file=input.files[0];
   if(!file)return;
   const reader=new FileReader();
+  reader.onerror=()=>alert('Fehler beim Laden des Bildes. Bitte versuche es nochmal.');
   reader.onload=e=>{
     wzMapDataURL=e.target.result;
     const img=document.getElementById('wz-preview');
-    img.src=wzMapDataURL;
+    // Show wrap first so img has dimensions
+    document.getElementById('wz-preview-wrap').style.display='block';
+    document.getElementById('wz-drop').style.display='none';
+    document.getElementById('wz-poly-hint').style.display='block';
     img.onload=()=>{
-      document.getElementById('wz-preview-wrap').style.display='block';
-      document.getElementById('wz-drop').style.display='none';
-      document.getElementById('wz-poly-hint').style.display='block';
-      wzInitPolyCanvas();
+      // Small delay to ensure image is rendered and has dimensions
+      setTimeout(()=>wzInitPolyCanvas(), 100);
     };
+    img.onerror=()=>alert('Bild konnte nicht geladen werden. Bitte JPG oder PNG verwenden.');
+    img.src=wzMapDataURL;
   };
   reader.readAsDataURL(file);
 }
@@ -1417,7 +1421,10 @@ function wzFinishScale(){
       <div class="wz-step-title">🗺️ Geländebild hochladen</div>
       <div class="wz-step-sub">Mache einen Screenshot von Google Maps mit dem Geländebereich und lade ihn hoch. Dann zeichnest du das Gelände als Polygon ein.</div>
 
-      <div class="wz-upload-area" onclick="document.getElementById('wz-file').click()" id="wz-drop">
+      <div class="wz-upload-area" onclick="document.getElementById('wz-file').click()" id="wz-drop"
+        ondragover="event.preventDefault();this.style.borderColor='#e94560'"
+        ondragleave="this.style.borderColor=''"
+        ondrop="event.preventDefault();const f=event.dataTransfer.files[0];if(f){const i=document.getElementById('wz-file');const dt=new DataTransfer();dt.items.add(f);i.files=dt.files;wzLoadImage(i);}">
         <div class="wz-upload-icon">📸</div>
         <div class="wz-upload-text">Bild hochladen</div>
         <div class="wz-upload-sub">Google Maps Screenshot, Luftbild oder eigenes Foto<br>JPG, PNG – tippe hier oder ziehe das Bild rein</div>
